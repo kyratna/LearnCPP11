@@ -1,6 +1,7 @@
 #include <iostream>
+using namespace std;
 
 
 int main () {
-    std::cout << "Hi this is CPP v11";
+    cout << "Hi this is CPP v11";
 }
