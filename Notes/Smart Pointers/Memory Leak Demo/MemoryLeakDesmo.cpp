@@ -1,8 +1,7 @@
 #include <iostream>
 using namespace std;
 
-// RAII - Resource Acquisition Is Initialization
-// we will follow this concept to resolve the issue of memory leak
+// memory leak issue with normal pointers.
 
 int func() {
     for(int i = 0; i < 100000; i++) {
@@ -14,7 +13,7 @@ int func() {
 int main() {
     func(); // calling func which is using dynamic memory allocation
             // consuming the memory as program control move furthur with each iteration.
-    
-    
+
+
     return 0;
 }

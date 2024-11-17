@@ -1,8 +1,9 @@
 #include <iostream>
 using namespace std;
 
-// RAII - Resource Acquisition Is Initialization
-// we will follow this concept to resolve the issue of memory leak
+// This is unique pointer implementation.
+// RAII - Resource Acquisition Is Initialization.
+// We will follow this concept to resolve the issue of memory leak with normal pointers.
 
 int func() {
     for(int i = 0; i < 100000; i++) {
