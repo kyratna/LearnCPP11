@@ -5,17 +5,26 @@ using namespace std;
 // RAII - Resource Acquisition Is Initialization.
 // We will follow this concept to resolve the issue of memory leak with normal pointers.
 
-int func() {
-    for(int i = 0; i < 100000; i++) {
-        cout << "Hey\n";
-        int* a = new int(10); // dynamic memory allocation which is on heap.
-    }
-}
+class wrapper {
+    private:
+        int* mem;
+
+    public:
+        // constructor initializing the mem with dynmic allocated memory address.
+        wrapper(int* a) : mem(a) {
+            cout << "Inside Constructor\n";
+        }
+        // destructor taking care of cleanup of dynamic memory allocated.
+        ~wrapper() {
+            cout << "Inside Destructor\n";
+            delete mem;
+        }
+
+};
 
 int main() {
-    func(); // calling func which is using dynamic memory allocation
-            // consuming the memory as program control move furthur with each iteration.
-    
-    
+    wrapper obj(new int(10)); // constructor is called as soon as class object is created.
+                              // destructor is called as soon as scope of above created object is over.
+
     return 0;
 }
