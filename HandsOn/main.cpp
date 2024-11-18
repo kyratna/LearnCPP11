@@ -1,7 +1,7 @@
 #include <iostream>
 using namespace std;
 
-// This is unique pointer implementation.
+// This is shared pointer implementation.
 // RAII - Resource Acquisition Is Initialization.
 // We will follow this concept to resolve the issue of memory leak with normal pointers.
 
@@ -9,6 +9,7 @@ template <typename T>
 class uniqueptr {
     private:
         int* res;
+        int* refcount;
 
     public:
         // default constructor
