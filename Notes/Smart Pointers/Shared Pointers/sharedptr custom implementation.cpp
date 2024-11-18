@@ -119,7 +119,8 @@ int main() {
     sharedptr<int> ptr1;
     sharedptr<int> ptr2(new int (10));
     sharedptr<int> ptr3(ptr2);
-    sharedptr<int> ptr4 = ptr2;
+    sharedptr<int> ptr4;
+    ptr4 = ptr2;
     sharedptr<int> ptr5(move(ptr2));
     ptr4 = move(ptr3);
 
