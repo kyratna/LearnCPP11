@@ -6,40 +6,78 @@ using namespace std;
 // We will follow this concept to resolve the issue of memory leak with normal pointers.
 
 template <typename T>
-class uniqueptr {
+class sharedptr {
     private:
         int* res;
+        int* refcount;
+
+        // increment the counter whenever pointer is shared
+        void incrementcounter() {
+            if(refcount) {
+                *(refcount)++;
+            }
+        }
+
+        // decrement the counter whenever shared pointer is removed
+        void decrementcounter() {
+            // check if refcount is pointing to any memory
+            if(refcount) {
+                *(refcount)--; // decrement of counter
+                // if refcount is 0, delete the whole pointer : res, refcount
+                if(*(refcount) == 0) {
+                    if(res) {
+                        delete res;
+                        delete refcount;
+                        res = nullptr; // assign res to nullptr
+                        refcount = nullptr; // assign refcount to nullptr
+                    }
+                }
+            }
+        }
 
     public:
-        // default constructor
-        uniqueptr(T* a = nullptr) : res(a) {
+        // default constructor or parameterized constructor
+        sharedptr(T* a = nullptr) : res(a), refcount(new int(1)) {
             cout << "Inside constructor\n";
         }
 
-        // deleting the copy constructor
-        uniqueptr(const uniqueptr<T>& ptr) = delete;
-
-        // deleting the operator = (copy assignment)
-        uniqueptr& operator= (const uniqueptr<T>& ptr) = delete;
-
-        // move constructor (tranfer the ownership)
-        uniqueptr(uniqueptr<T>&& ptr) noexcept {
-            res = ptr.res; // tranfer ownership
-            ptr.res = nullptr; // nullifies the internal pointer of ptr, ensuring that ptr no longer owns the resource.
+        // copy constructor - copying ptr to other ptr
+        sharedptr(const sharedptr<T>& ptr) : res(ptr.res) {
+            refcount = ptr.refcount;
+            incrementcounter(); // increase refcount since copy of shared ptr is created
         }
 
-        // move assignment operator (= move())
-        uniqueptr& operator= (uniqueptr<T>&& ptr) noexcept {
-            // avoid self - assignment
+        //the operator = (copy assignment) ptr3 = ptr1
+        sharedptr& operator= (const sharedptr<T>& ptr) {
+            // avoiding the self assignment
             if(this != &ptr) {
-                // if this.res is holding anything, delete that to avoid memory leak.
-                if(res) {
-                    delete res;
-                }
-                res = ptr.res; // tranfer the ownership
-                ptr.res = nullptr; // nullifies the internal pointer of ptr, ensuring that ptr no longer owns the resource.
+                decrementcounter(); // decrease counter of ptr3 since it will now have ptr1 content.
+                res = ptr.res; // copied the ownership
+                refcount = ptr.refcount; // copied the refcount memory location
+                incrementcounter(); // increase counter of ptr3 which is now ptr1
             }
-            return *this;
+            return *this; // return the reference back
+        }
+
+        // move constructor (tranfer the ownership) rvalue with const
+        sharedptr(sharedptr<T>&& ptr) noexcept {
+            res = ptr.res; // tranfer ownership
+            refcount = ptr.refcount; // tranfer refcount
+            ptr.res = nullptr; // nullifies the internal pointer of ptr, ensuring that ptr no longer owns the resource
+            ptr.refcount = nullptr; // nullifies the internal refcount of ptr
+        }
+
+        // move assignment operator (= move()) : ptr3 = move(ptr1)
+        sharedptr& operator= (sharedptr<T>&& ptr) noexcept {
+            // avoid self - assignment move
+            if(this != &ptr) {
+                decrementcounter(); // decrease refcount of ptr3, it is going to loose its older resource
+                res = ptr.res; // tranfer the ownership
+                refcount = ptr.refcount; // tranfer the refcount
+                ptr.res = nullptr; // nullifies the internal pointer of ptr, ensuring that ptr no longer owns the resource.
+                ptr.refcount = nullptr; // nullifies the internal refcount of ptr
+            }
+            return *this; // return the reference back
         }
 
         //overloading -> operator
@@ -52,39 +90,42 @@ class uniqueptr {
             return *res;
         }
 
+        // get - gets you refcount of shared pointer
+        T* get_count() {
+            if(refcount) {
+                return *refcount;
+            }
+            return -1;
+        }
+
         // get - gets you raw pointer to the memory pointer is pointing to.
         T* get() {
-            return res;
+            return ref;
         }
 
         // reset - reset the ownership and sets to new passed memory location.
         void reset(T* newres = nullptr) {
-            if(res) {
-                delete res;
-            }
-            res = newres;
+            decrementcounter(); // decrease the older refcount
+            res = newres; // new res is assigned as part of reset
+            refcount = new int(1); // new ref count initialized with 1
         }
 
-        ~uniqueptr() {
-            if(res) {
-                delete res;
-                res = nullptr;
-            }
+        ~sharedptr() {
+            decrementcounter(); // decrease the ref count
         }
 };
 
 int main() {
-    uniqueptr<int> ptr1(new int(10));
-    // uniqueptr<int> ptr2(ptr2); // copy constructor. copy of ownership is not allowed in unique pointer. compilation error.
-    // uniqueptr<int> ptr3 = ptr1; // copy constructor. copy of ownership is not allowed in unique pointer. compilation error.
-    uniqueptr<int> ptr4(new int(20));
-    // ptr4 = ptr1; // assignment operator. copy of ownership is not allowed in unique pointer. compilation error.
-    uniqueptr<int> ptr5 = move(ptr1); // move is allowed. transfer of ownership.
-    ptr4 = move(ptr1); // move is allowed. transfer of ownership.
-    // ptr4 -> func(); // arrow operator is also valid.
-    cout << *ptr1 << endl; // de-reference operator or * operator is also valid.
-    ptr1.get(); // gets raw pointer to the memory it is pointing to. valid operation.
-    ptr4.reset(new int(50)); // reset the ownership and sets to new passed memory location.
+    sharedptr<int> ptr1;
+    sharedptr<int> ptr2(new int (10));
+    sharedptr<int> ptr3(ptr2);
+    sharedptr<int> ptr4 = ptr2;
+    sharedptr<int> ptr5(move(ptr2));
+    ptr4 = move(ptr3);
 
-    return 0;
+    ptr1.reset();
+    ptr1.reset(new int(15));
+
+    cout << *ptr1 << endl;
+    // ptr1 -> func();
 }

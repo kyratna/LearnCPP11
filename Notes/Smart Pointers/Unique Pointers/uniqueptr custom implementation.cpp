@@ -11,7 +11,7 @@ class uniqueptr {
         int* res;
 
     public:
-        // default constructor
+        // default constructor or parameterized constructor
         uniqueptr(T* a = nullptr) : res(a) {
             cout << "Inside constructor\n";
         }
