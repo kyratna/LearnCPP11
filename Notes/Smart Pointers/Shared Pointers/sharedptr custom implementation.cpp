@@ -100,7 +100,7 @@ class sharedptr {
 
         // get - gets you raw pointer to the memory pointer is pointing to.
         T* get() {
-            return ref;
+            return res;
         }
 
         // reset - reset the ownership and sets to new passed memory location.
