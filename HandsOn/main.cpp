@@ -1,131 +1,109 @@
 #include <iostream>
+#include <cstring>
 using namespace std;
 
-// This is shared pointer implementation.
-// RAII - Resource Acquisition Is Initialization.
-// We will follow this concept to resolve the issue of memory leak with normal pointers.
-
-template <typename T>
-class sharedptr {
+class MyString {
     private:
-        int* res;
-        int* refcount;
-
-        // increment the counter whenever pointer is shared
-        void incrementcounter() {
-            if(refcount) {
-                *(refcount)++;
-            }
-        }
-
-        // decrement the counter whenever shared pointer is removed
-        void decrementcounter() {
-            // check if refcount is pointing to any memory
-            if(refcount) {
-                *(refcount)--; // decrement of counter
-                // if refcount is 0, delete the whole pointer : res, refcount
-                if(*(refcount) == 0) {
-                    if(res) {
-                        delete res;
-                        delete refcount;
-                        res = nullptr; // assign res to nullptr
-                        refcount = nullptr; // assign refcount to nullptr
-                    }
-                }
-            }
-        }
-
+        char* res;
+        int len;
     public:
-        // default constructor or parameterized constructor
-        sharedptr(T* a = nullptr) : res(a), refcount(new int(1)) {
-            cout << "Inside constructor\n";
+        // default constructor
+        MyString() {
+            res = nullptr;
+            len = 0;
         }
 
-        // copy constructor - copying ptr to other ptr
-        sharedptr(const sharedptr<T>& ptr) : res(ptr.res) {
-            refcount = ptr.refcount;
-            incrementcounter(); // increase refcount since copy of shared ptr is created
+        // parameterised constructor
+        MyString(const char* str) {
+            len = strlen(str);
+            res = new char[len + 1];
+            strcpy(res, str);
         }
 
-        //the operator = (copy assignment) ptr3 = ptr1
-        sharedptr& operator= (const sharedptr<T>& ptr) {
-            // avoiding the self assignment
-            if(this != &ptr) {
-                decrementcounter(); // decrease counter of ptr3 since it will now have ptr1 content.
-                res = ptr.res; // copied the ownership
-                refcount = ptr.refcount; // copied the refcount memory location
-                incrementcounter(); // increase counter of ptr3 which is now ptr1
+        // copy constructor
+        MyString (const MyString& str) {
+            len = str.len;
+            res = new char[len + 1];
+            strcpy(res, str.res);
+        }
+
+        // copy assignment operator
+        MyString operator= (const MyString& str) {
+            if(this != &str) {
+                delete[] res;
+                len = str.len;
+                res = new char[len + 1];
+                strcpy(res, str.res);
             }
-            return *this; // return the reference back
+            return *this;
         }
 
-        // move constructor (tranfer the ownership) rvalue with const
-        sharedptr(sharedptr<T>&& ptr) noexcept {
-            res = ptr.res; // tranfer ownership
-            refcount = ptr.refcount; // tranfer refcount
-            ptr.res = nullptr; // nullifies the internal pointer of ptr, ensuring that ptr no longer owns the resource
-            ptr.refcount = nullptr; // nullifies the internal refcount of ptr
-        }
-
-        // move assignment operator (= move()) : ptr3 = move(ptr1)
-        sharedptr& operator= (sharedptr<T>&& ptr) noexcept {
-            // avoid self - assignment move
-            if(this != &ptr) {
-                decrementcounter(); // decrease refcount of ptr3, it is going to loose its older resource
-                res = ptr.res; // tranfer the ownership
-                refcount = ptr.refcount; // tranfer the refcount
-                ptr.res = nullptr; // nullifies the internal pointer of ptr, ensuring that ptr no longer owns the resource.
-                ptr.refcount = nullptr; // nullifies the internal refcount of ptr
+        // move constructor
+        MyString (MyString&& str) {
+            if(this != &str) {
+                delete[] res;
+                len = str.len;
+                res = str.res;
+                str.res = nullptr;
+                str.len = 0;
             }
-            return *this; // return the reference back
         }
 
-        //overloading -> operator
-        T* operator->() {
-            return res;
-        }
-
-        // overloading de-reference operator
-        T& operator*() {
-            return *res;
-        }
-
-        // get - gets you refcount of shared pointer
-        T* get_count() {
-            if(refcount) {
-                return *refcount;
+        // move assignment operator
+        MyString operator=(MyString&& str) {
+            if(this != &str) {
+                delete[] res;
+                len = str.len;
+                res = str.res;
+                str.res = nullptr;
+                str.len = 0;
             }
-            return -1;
+            return *this;
         }
 
-        // get - gets you raw pointer to the memory pointer is pointing to.
-        T* get() {
-            return ref;
+        // return the length data member value of MyString obj
+        int length() {
+            return len;
         }
 
-        // reset - reset the ownership and sets to new passed memory location.
-        void reset(T* newres = nullptr) {
-            decrementcounter(); // decrease the older refcount
-            res = newres; // new res is assigned as part of reset
-            refcount = new int(1); // new ref count initialized with 1
+        // display the res of MyString obj
+        void display() {
+            for(int i=0; i<len; i++) {
+                cout << res[i];
+            }
+            cout << endl;
         }
 
-        ~sharedptr() {
-            decrementcounter(); // decrease the ref count
+        // destructor to free up resource
+        ~MyString() {
+            delete[] res;
         }
 };
 
 int main() {
-    sharedptr<int> ptr1;
-    sharedptr<int> ptr2(new int (10));
-    sharedptr<int> ptr3(ptr2);
-    sharedptr<int> ptr4 = ptr2;
-    sharedptr<int> ptr5(move(ptr2));
-    ptr4 = move(ptr3);
-
-    ptr1.reset();
-    ptr1.reset(new int(15));
-
-    cout << *ptr1 << endl;
-    // ptr1 -> func();
+    MyString s1; // default constructor
+    cout << "s1: ";
+    s1.display(); // nothing printed
+    MyString s2 = "Hello"; // parameterised constructor
+    cout << "s2: ";
+    s2.display(); // Hello
+    MyString s3 = s2; // copy constructor
+    cout << "s2: ";
+    s2.display();
+    cout << "s3: ";
+    s3.display();
+    MyString s4(s3); // copy constructor
+    cout << "s4: ";
+    s4.display();
+    MyString s5; // default constructor
+    s5 = s2; // copy assignment operator
+    cout << "s5: ";
+    s5.display();
+    MyString s6; // default constructor
+    s6 = move(s2); // move constructor
+    cout << "s6: ";
+    s6.display();
+    cout << "s2: ";
+    s2.display();
+    cout << "cutom string class implementation ended";
 }
