@@ -47,7 +47,7 @@ class sharedptr {
             incrementcounter(); // increase refcount since copy of shared ptr is created
         }
 
-        //the operator = (copy assignment) ptr3 = ptr1
+        //the operator = (copy assignment) ptr3 (this) = ptr1 | function return type 'sharedptr&' is to enable chaining of operations
         sharedptr& operator= (const sharedptr<T>& ptr) {
             // avoiding the self assignment
             if(this != &ptr) {
