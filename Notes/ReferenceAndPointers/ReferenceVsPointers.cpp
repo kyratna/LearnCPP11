@@ -11,6 +11,12 @@ void PrintUsingPointersWithChecks(int* x) {
     }
 }
 
+// here you are not requried to check null ptr.
+// since reference has to be initialized always.
+void PrintUsingReference(int& x) {
+    cout << x << endl;
+}
+
 int main() {
     int a = 5;
     int b;
@@ -20,5 +26,9 @@ int main() {
     PrintUsingPointersWithChecks(&a); // 5
     PrintUsingPointersWithChecks(&b); // 0
     PrintUsingPointersWithChecks(nullptr); // no print
+
+    PrintUsingReference(a);
+    PrintUsingReference(b);
+    // PrintUsingReference(nullptr); // this is actually an error
     return 0;
 }
